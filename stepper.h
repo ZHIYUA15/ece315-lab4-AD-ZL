@@ -6,7 +6,6 @@
  *
  */
 
-
 #ifndef SRC_STEPPER_H_
 #define SRC_STEPPER_H_
 
@@ -28,22 +27,21 @@
 
 #include "math.h"
 
-#define NO_OF_STEPS_PER_REVOLUTION_HALF_DRIVE	4096
-#define NO_OF_STEPS_PER_REVOLUTION_FULL_DRIVE	2048
+#define NO_OF_STEPS_PER_REVOLUTION_HALF_DRIVE 4096
+#define NO_OF_STEPS_PER_REVOLUTION_FULL_DRIVE 2048
 
 XGpio PModMotorInst;
-#define PMOD_MOTOR_DEVICE_ID	XPAR_STEPPER_MOTOR_DEVICE_ID
-
+#define PMOD_MOTOR_DEVICE_ID XPAR_STEPPER_MOTOR_DEVICE_ID
 
 #define WINDINGS_OFF 0b0000
 
 /***********************Stepper Motor Control Patterns***********************/
 
 // Wave Drive Mode: Activates a single coil at a time.
-#define WAVE_DRIVE_1 0b0001  // Coil 1 activated
-#define WAVE_DRIVE_2 0b0010  // Coil 2 activated
-#define WAVE_DRIVE_3 0b0100  // Coil 3 activated
-#define WAVE_DRIVE_4 0b1000  // Coil 4 activated
+#define WAVE_DRIVE_1 0b0001 // Coil 1 activated
+#define WAVE_DRIVE_2 0b0010 // Coil 2 activated
+#define WAVE_DRIVE_3 0b0100 // Coil 3 activated
+#define WAVE_DRIVE_4 0b1000 // Coil 4 activated
 
 /*
  * TODO 1: Define Coil Activation Patterns for Full Step Mode
@@ -97,13 +95,21 @@ unsigned long ramp_LastStepTime;
  */
 
 // struct for motor parameters
-typedef struct {
-	long   final_position;
-	long  currentposition_in_steps;
+typedef struct
+{
+	long final_position;
+	long currentposition_in_steps;
 	float rotational_speed;
 	float rotational_acceleration;
 	float rotational_deceleration;
 } MotorParameters;
+
+typedef enum
+{
+	WAVE_DRIVE,
+	FULL_STEP,
+	HALF_STEP
+} StepMode;
 
 /////////////////////////////////////////////////////
 _Bool Stepper_processMovement(void);
@@ -118,6 +124,10 @@ void Stepper_SetupStop();
 void Stepper_setSpeedInStepsPerSecond(float speedInStepsPerSecond);
 void Stepper_setAccelerationInStepsPerSecondPerSecond(float accelerationInStepsPerSecondPerSecond);
 void Stepper_setDecelerationInStepsPerSecondPerSecond(float decelerationInStepsPerSecondPerSecond);
+
+// Update the function prototype to include the StepMode
+void Stepper_setNextStep(int direction, StepMode mode);
+
 void Stepper_moveRelativeInSteps(long distanceToMoveInSteps);
 void Stepper_SetupRelativeMoveInSteps(long distanceToMoveInSteps);
 void Stepper_SetupMoveInSteps(long absolutePositionToMoveToInSteps);
