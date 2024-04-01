@@ -56,7 +56,12 @@ XGpio PModMotorInst;
  * Define the bit patterns for each step in the sequence.
  * NOTE: Half Step Mode typically doubles the number of steps per revolution, offering finer control.
  */
-
+typedef enum
+{
+	WAVE_DRIVE,
+	FULL_STEP,
+	HALF_STEP
+} StepMode;
 /**************************************************************************/
 
 int _signals_to_motor[4];
@@ -104,12 +109,6 @@ typedef struct
 	float rotational_deceleration;
 } MotorParameters;
 
-typedef enum
-{
-	WAVE_DRIVE,
-	FULL_STEP,
-	HALF_STEP
-} StepMode;
 
 /////////////////////////////////////////////////////
 _Bool Stepper_processMovement(void);
