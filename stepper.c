@@ -219,7 +219,7 @@ _Bool Stepper_processMovement(void)
 	}
 
 	// execute the step on the rising edge
-	Stepper_setNextWaveDriveStep(direction_Scaler);
+	Stepper_setNextStep(direction_Scaler, WAVE_DRIVE);
 
 	// update the current position and speed
 	currentPosition_InSteps += direction_Scaler;
