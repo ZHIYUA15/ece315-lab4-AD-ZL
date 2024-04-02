@@ -219,12 +219,12 @@ _Bool Stepper_processMovement(void)
 	}
 
 	// execute the step on the rising edge
-	Stepper_setNextStep(direction_Scaler, WAVE_DRIVE);
 
-	// update the current position and speed
-	currentPosition_InSteps += direction_Scaler;
+void Stepper_setNextStep(int direction, StepMode mode) {
+    // update the current position and speed
+    currentPosition_InSteps += direction;
 
-	currentStepPeriod = ramp_NextStepPeriod;
+    currentStepPeriod = ramp_NextStepPeriod;
 
 	// compute the period for the next step
 	//   StepPeriod =
