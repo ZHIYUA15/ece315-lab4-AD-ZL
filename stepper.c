@@ -9,21 +9,6 @@
 
 #include "stepper.h"
 
-// Define coil activation patterns for FULL_STEP and HALF_STEP modes
-#define FULL_STEP_1 (WAVE_DRIVE_1 | WAVE_DRIVE_2) // Activate Coil 1 and Coil 2
-#define FULL_STEP_2 (WAVE_DRIVE_2 | WAVE_DRIVE_3) // Activate Coil 2 and Coil 3
-#define FULL_STEP_3 (WAVE_DRIVE_3 | WAVE_DRIVE_4) // Activate Coil 3 and Coil 4
-#define FULL_STEP_4 (WAVE_DRIVE_4 | WAVE_DRIVE_1) // Activate Coil 4 and Coil 1
-
-#define HALF_STEP_1 WAVE_DRIVE_1 // Activate Coil 1
-#define HALF_STEP_2 FULL_STEP_1	 // Activate Coil 1 and Coil 2
-#define HALF_STEP_3 WAVE_DRIVE_2 // Activate Coil 2
-#define HALF_STEP_4 FULL_STEP_2	 // Activate Coil 2 and Coil 3
-#define HALF_STEP_5 WAVE_DRIVE_3 // Activate Coil 3
-#define HALF_STEP_6 FULL_STEP_3	 // Activate Coil 3 and Coil 4
-#define HALF_STEP_7 WAVE_DRIVE_4 // Activate Coil 4
-#define HALF_STEP_8 FULL_STEP_4	 // Activate Coil 4 and Coil 1
-
 // Define the step mode enum
 int idx;
 
@@ -124,9 +109,140 @@ void Stepper_moveToPositionInSteps(long absolutePositionToMoveToInSteps)
 	Stepper_SetupMoveInSteps(absolutePositionToMoveToInSteps);
 	while (!Stepper_processMovement())
 	{
+		// Check for emergency stop button press
+		if (emergency_stop_triggered)
+		{
+			Stepper_disableMotor();
+			break;
+		}
 		vTaskDelay(1); // Delay for 1 tick to prevent blocking behavior
 	}
-	Stepper_disableMotor();
+	if (!emergency_stop_triggered)
+	{
+		Stepper_disableMotor();
+	}
+}
+
+Based on the requirements and the provided code files, here are the modified code files for stepper.h, stepper.c, and main.c:
+
+<document index="3"> <source>stepper.h</source> <document_content> // Add the following declarations in stepper.h
+// Function prototype for updating the LED animation
+void Stepper_updateLEDAnimation();
+
+// External variable to track the emergency stop state
+extern _Bool emergency_stop_triggered;
+</ document_content>
+	</ document>
+
+	<document index = "4"><source> stepper.c</ source><document_content> // Add the following function in stepper.c
+	void Stepper_updateLEDAnimation()
+{
+	if (Stepper_motionComplete())
+	{
+		// Turn off all LEDs when motor is not in motion
+		XGpio_DiscreteWrite(&LEDInst, LED_CHANNEL, 0x00);
+	}
+	else
+	{
+		// Animate LEDs based on the current step mode
+		switch (currentStepMode)
+		{
+		case WAVE_DRIVE:
+			// Implement LED animation for wave drive mode
+			break;
+		case FULL_STEP:
+			// Implement LED animation for full step mode
+			break;
+		case HALF_STEP:
+			// Implement LED animation for half step mode
+			break;
+		}
+	}
+}
+
+//----------------------------------------------Zhiyuan Li------------------------------------------------
+
+// Update the Stepper_moveToPositionInSteps function to check for emergency stop
+
+void Stepper_moveToPositionInSteps(long absolutePositionToMoveToInSteps)
+{
+	Stepper_SetupMoveInSteps(absolutePositionToMoveToInSteps);
+	while (!Stepper_processMovement())
+	{
+		// Check for emergency stop button press
+		if (emergency_stop_triggered)
+		{
+			Stepper_disableMotor();
+			break;
+		}
+		vTaskDelay(1); // Delay for 1 tick to prevent blocking behavior
+	}
+	if (!emergency_stop_triggered)
+	{
+		Stepper_disableMotor();
+	}
+}
+</ document_content>
+	</ document>
+
+	<document index = "5"><source> main.c</ source><document_content> // Add the following tasks in main.c
+	void emergency_stop_task(void *pvParameters)
+{
+	while (1)
+	{
+		u32 buttonState;
+		XGpio_DiscreteRead(&BtnsInst, BUTTONS_CHANNEL, &buttonState);
+		if (buttonState & EMERGENCY_STOP_BUTTON_MASK)
+		{
+			emergency_stop_triggered = TRUE;
+		}
+
+		vTaskDelay(10); // Delay for 10 ticks (100 ms)
+	}
+}
+
+void led_animation_task(void *pvParameters)
+{
+	while (1)
+	{
+		Stepper_updateLEDAnimation();
+		vTaskDelay(50); // Delay for 50 ticks (500 ms) to slow down the animation
+	}
+}
+
+//----------------------------------------------Zhiyuan Li------------------------------------------------
+
+// External variable to track the emergency stop state
+extern _Bool emergency_stop_triggered;
+</ document_content>
+	</ document>
+
+	<document index = "4"><source> stepper.c</ source><document_content> // Add the following function in stepper.c
+
+	// Add a new function to update the LED animation based on the current step mode
+	void Stepper_updateLEDAnimation()
+{
+	if (Stepper_motionComplete())
+	{
+		// Turn off all LEDs when motor is not in motion
+		XGpio_DiscreteWrite(&LEDInst, LED_CHANNEL, 0x00);
+	}
+	else
+	{
+		// Animate LEDs based on the current step mode
+		switch (currentStepMode)
+		{
+		case WAVE_DRIVE:
+			// Implement LED animation for wave drive mode
+			break;
+		case FULL_STEP:
+			// Implement LED animation for full step mode
+			break;
+		case HALF_STEP:
+			// Implement LED animation for full step mode
+			break;
+		}
+	}
 }
 
 void Stepper_SetupMoveInSteps(long absolutePositionToMoveToInSteps)
@@ -219,12 +335,12 @@ _Bool Stepper_processMovement(void)
 	}
 
 	// execute the step on the rising edge
+	Stepper_setNextStep(direction_Scaler, WAVE_DRIVE);
 
-void Stepper_setNextStep(int direction, StepMode mode) {
-    // update the current position and speed
-    currentPosition_InSteps += direction;
+	// update the current position and speed
+	currentPosition_InSteps += direction_Scaler;
 
-    currentStepPeriod = ramp_NextStepPeriod;
+	currentStepPeriod = ramp_NextStepPeriod;
 
 	// compute the period for the next step
 	//   StepPeriod =
